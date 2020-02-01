@@ -8,7 +8,65 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double *tempbank=0;
+//double *tempbank=0;
+
+#define ROWS 128
+#define COLS 128
+
+double x [128][128];
+double tempbank [128];
+
+
+void coldwt(int n){ //n is the current col number
+  double a;
+  int i;
+
+  // Predict 1
+  a=-1.586134342;
+  for (i=1;i<ROWS-2;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[ROWS-1][n]+=2*a*x[ROWS-2][n];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<ROWS;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[0][n]+=2*a*x[1][n];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<ROWS-2;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[ROWS-1][n]+=2*a*x[ROWS-2][n];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<ROWS;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[0][n]+=2*a*x[1][n];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<ROWS;i++) {
+    if (i%2) x[i][n]*=a;
+    else x[i][n]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<ROWS;i++) {
+    if (i%2==0) tempbank[i/2]=x[i][n];
+    else tempbank[ROWS/2+i/2]=x[i][n];
+  }
+  for (i=0;i<ROWS;i++) x[i][n]=tempbank[i];
+}
+
+
+
 
 /**
  *  fwt97 - Forward biorthogonal 9/7 wavelet transform (lifting implementation)
@@ -21,52 +79,52 @@ double *tempbank=0;
  *
  *  See also iwt97.
  */
-void fwt97(double* x,int n) {
+void rowdwt(int n) { //n is the current row number
   double a;
   int i;
 
   // Predict 1
   a=-1.586134342;
-  for (i=1;i<n-2;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=1;i<COLS-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[n-1]+=2*a*x[n-2];
+  x[n][COLS-1]+=2*a*x[n][COLS-2];
 
   // Update 1
   a=-0.05298011854;
-  for (i=2;i<n;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=2;i<COLS;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[0]+=2*a*x[1];
+  x[n][0]+=2*a*x[n][1];
 
   // Predict 2
   a=0.8829110762;
-  for (i=1;i<n-2;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=1;i<COLS-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[n-1]+=2*a*x[n-2];
+  x[n][COLS-1]+=2*a*x[n][COLS-2];
 
   // Update 2
   a=0.4435068522;
-  for (i=2;i<n;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=2;i<COLS;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[0]+=2*a*x[1];
+  x[n][0]+=2*a*x[n][1];
 
   // Scale
   a=1/1.149604398;
-  for (i=0;i<n;i++) {
-    if (i%2) x[i]*=a;
-    else x[i]/=a;
+  for (i=0;i<COLS;i++) {
+    if (i%2) x[n][i]*=a;
+    else x[n][i]/=a;
   }
 
   // Pack
-  if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
-  for (i=0;i<n;i++) {
-    if (i%2==0) tempbank[i/2]=x[i];
-    else tempbank[n/2+i/2]=x[i];
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<COLS;i++) {
+    if (i%2==0) tempbank[i/2]=x[n][i];
+    else tempbank[COLS/2+i/2]=x[n][i];
   }
-  for (i=0;i<n;i++) x[i]=tempbank[i];
+  for (i=0;i<COLS;i++) x[n][i]=tempbank[i];
 }
 
 /**
@@ -76,78 +134,133 @@ void fwt97(double* x,int n) {
  *
  *  See also fwt97.
  */
-void iwt97(double* x,int n) {
+void rowiwt(int n) { //n is the current row
   double a;
   int i;
 
   // Unpack
-  if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
-  for (i=0;i<n/2;i++) {
-    tempbank[i*2]=x[i];
-    tempbank[i*2+1]=x[i+n/2];
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<COLS/2;i++) {
+    tempbank[i*2]=x[n][i];
+    tempbank[i*2+1]=x[n][i+COLS/2];
   }
-  for (i=0;i<n;i++) x[i]=tempbank[i];
+  for (i=0;i<COLS;i++) x[n][i]=tempbank[i];
 
   // Undo scale
   a=1.149604398;
-  for (i=0;i<n;i++) {
-    if (i%2) x[i]*=a;
-    else x[i]/=a;
+  for (i=0;i<COLS;i++) {
+    if (i%2) x[n][i]*=a;
+    else x[n][i]/=a;
   }
 
   // Undo update 2
   a=-0.4435068522;
-  for (i=2;i<n;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=2;i<COLS;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[0]+=2*a*x[1];
+  x[n][0]+=2*a*x[n][1];
 
   // Undo predict 2
   a=-0.8829110762;
-  for (i=1;i<n-2;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=1;i<COLS-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[n-1]+=2*a*x[n-2];
+  x[n][COLS-1]+=2*a*x[n][COLS-2];
 
   // Undo update 1
   a=0.05298011854;
-  for (i=2;i<n;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=2;i<COLS;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[0]+=2*a*x[1];
+  x[n][0]+=2*a*x[n][1];
 
   // Undo predict 1
   a=1.586134342;
-  for (i=1;i<n-2;i+=2) {
-    x[i]+=a*(x[i-1]+x[i+1]);
+  for (i=1;i<COLS-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
   }
-  x[n-1]+=2*a*x[n-2];
+  x[n][COLS-1]+=2*a*x[n][COLS-2];
 }
 
+void coldiwt(int n){
+    double a;
+    int i;
+
+    // Unpack
+    //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+    for (i=0;i<ROWS/2;i++) {
+      tempbank[i*2]=x[i][n];
+      tempbank[i*2+1]=x[i+ROWS/2][n];
+    }
+    for (i=0;i<ROWS;i++) x[i][n]=tempbank[i];
+
+    // Undo scale
+    a=1.149604398;
+    for (i=0;i<ROWS;i++) {
+      if (i%2) x[i][n]*=a;
+      else x[i][n]/=a;
+    }
+
+    // Undo update 2
+    a=-0.4435068522;
+    for (i=2;i<ROWS;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[0][n]+=2*a*x[1][n];
+
+    // Undo predict 2
+    a=-0.8829110762;
+    for (i=1;i<ROWS-2;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[ROWS-1][n]+=2*a*x[ROWS-2][n];
+
+    // Undo update 1
+    a=0.05298011854;
+    for (i=2;i<ROWS;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[0][n]+=2*a*x[1][n];
+
+    // Undo predict 1
+    a=1.586134342;
+    for (i=1;i<ROWS-2;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[ROWS-1][n]+=2*a*x[ROWS-2][n];
+}
+
+
 int main() {
-  double x[32];
   int i;
 
   // Makes a fancy cubic signal
-  for (i=0;i<32;i++) x[i]=5+i+0.4*i*i-0.02*i*i*i;
+  //for (i=0;i<32;i++) x[0][i]=5+i+0.4*i*i-0.02*i*i*i; //rows
+
+  for (i=0;i<32;i++) x[i][0]=5+i+0.4*i*i-0.02*i*i*i; //cols
 
   // Prints original sigal x
   printf("Original signal:\n");
-  for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[i]);
+  //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
+  for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[i][0]); //cols
   printf("\n");
 
   // Do the forward 9/7 transform
-  fwt97(x,32);
+  //rowdwt(0);
+  coldwt(0);
 
   // Prints the wavelet coefficients
   printf("Wavelets coefficients:\n");
-  for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[i]);
+  //for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[0][i]); //rows
+  for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[i][0]); //cols
   printf("\n");
 
   // Do the inverse 9/7 transform
-  iwt97(x,32);
+  //rowiwt(0);
+  coldiwt(0);
 
   // Prints the reconstructed signal
   printf("Reconstructed signal:\n");
-  for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[i]);
+  //for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[0][i]); //rows
+  for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[i][0]); //cols
 }
