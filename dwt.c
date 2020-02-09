@@ -237,7 +237,7 @@ int main() {
   // Makes a fancy cubic signal
   //for (i=0;i<32;i++) x[0][i]=5+i+0.4*i*i-0.02*i*i*i; //rows
 
-  for (i=0;i<32;i++) x[i][0]=5+i+0.4*i*i-0.02*i*i*i; //cols
+  for (i=0;i<32;i++) x[i][0]=10;//5+i+0.4*i*i-0.02*i*i*i; //cols
 
   // Prints original sigal x
   printf("Original signal:\n");
@@ -262,5 +262,5 @@ int main() {
   // Prints the reconstructed signal
   printf("Reconstructed signal:\n");
   //for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[i][0]); //cols
+  for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[i][0]); //cols
 }
