@@ -16,6 +16,48 @@
 float x [64][64];
 float tempbank [64];
 
+float R[ROWS][COLS],G[ROWS][COLS],B[ROWS][COLS];
+float Y[ROWS][COLS],U[ROWS][COLS],V[ROWS][COLS];
+float subU[ROWS/2][COLS/2],subV[ROWS/2][COLS/2];
+
+void colorSpaceChange(){
+  for(int i = 0; i < ROWS; i++){
+    for(int j = 0; j < COLS; j++){
+      Y[i][j] = 0.299R[i][j] + 0.587G[i][j] + 0.114B[i][j];
+      U[i][j] = 0.492 (B[i][j]-Y[i][j]);
+      V[i][j] = 0.877 (R[i]-Y[j]);
+    }
+  }
+}
+
+// 4:2:2 sampling
+void chromaSubSampler(){
+  for(int i=0; i<ROWS; i+=2){
+    for(int j=0; j<COLS; j+=2){
+      subU[i/2][j/2] = U[i][j];
+      subV[i/2][j/2] = V[i][j];
+    }
+  }
+}
+void chromaUpSampler(){
+  for(int i=0; i<ROWS; i+=2){
+    for(int j=0; j<COLS; j+=2){
+      U[i][j] = subU[i][j];
+      U[i+1][j] = subU[i][j];
+      U[i][j+1] = subU[i][j];
+      U[i+1][j+1] = subU[i][j];
+
+      V[i][j] = subV[i][j];
+      V[i+1][j] = subV[i][j];
+      V[i][j+1] = subV[i][j];
+      V[i+1][j+1] = subV[i][j];
+
+    }
+  }
+}
+
+
+
 
 void coldwt(int n){ //n is the current col number
   float a;
@@ -182,7 +224,7 @@ void rowiwt(int n) { //n is the current row
   x[n][COLS-1]+=2*a*x[n][COLS-2];
 }
 
-void coldiwt(int n){
+void coliwt(int n){
     float a;
     int i;
 
@@ -233,12 +275,12 @@ void coldiwt(int n){
 
 int main() {
   int i;
-
+  int j;
   // Makes a fancy cubic signal
   //for (i=0;i<32;i++) x[0][i]=5+i+0.4*i*i-0.02*i*i*i; //rows
 
   for (i=0;i<ROWS;i++){
-    for (int j=0; j< COLS; j++){
+    for (j=0; j< COLS; j++){
       x[i][j]=5+i+0.4*i*i-0.02*i*i*j;
     }
   }
@@ -247,38 +289,50 @@ int main() {
   printf("Original signal:\n");
   //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
   for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
     for (j=0; j< COLS; j++){
-      printf("x[%d]=%f\n",i,x[i][j]); //cols
-      printf("\n");
+      printf("%f ",x[i][j]); //cols
     }
+    printf("\n");
   }
 
   // Do the forward 9/7 transform
-  //rowdwt(0);
-  coldwt(0);
+  for(i = 0; i<ROWS; i++){
+    rowdwt(i);
+  }for(i = 0; i< COLS; i++){
+    coldwt(i);
+  }
+
+
 
   // Prints the wavelet coefficients
   printf("Wavelets coefficients:\n");
   //for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[0][i]); //rows
   for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
     for (j=0; j< COLS; j++){
-      printf("x[%d]=%f\n",i,x[i][j]); //cols
-      printf("\n");
+      printf("%f ",x[i][j]); //cols
     }
+    printf("\n");
   }
+
   printf("\n");
 
   // Do the inverse 9/7 transform
-  //rowiwt(0);
-  coldiwt(0);
+  for(i = 0; i<ROWS; i++){
+    rowiwt(i);
+  }for(i = 0; i< COLS; i++){
+    coliwt(i);
+  }
 
   // Prints the reconstructed signal
   printf("Reconstructed signal:\n");
   //for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[0][i]); //rows
   for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
     for (j=0; j< COLS; j++){
-      printf("x[%d]=%f\n",i,x[i][j]); //cols
-      printf("\n");
+      printf("%f ",x[i][j]); //cols
     }
+    printf("\n");
   }
 }
