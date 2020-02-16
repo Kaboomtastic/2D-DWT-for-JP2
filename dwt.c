@@ -10,18 +10,18 @@
 
 //double *tempbank=0;
 
-#define ROWS 128
-#define COLS 128
+#define ROWS 64
+#define COLS 64
 
-double x [128][128];
-double tempbank [128];
+float x [64][64];
+float tempbank [64];
 
 
 void coldwt(int n){ //n is the current col number
-  double a;
+  float a;
   int i;
 
-  // Predict 1
+  // Predict 1tempbank
   a=-1.586134342;
   for (i=1;i<ROWS-2;i+=2) {
     x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
@@ -80,7 +80,7 @@ void coldwt(int n){ //n is the current col number
  *  See also iwt97.
  */
 void rowdwt(int n) { //n is the current row number
-  double a;
+  float a;
   int i;
 
   // Predict 1
@@ -135,7 +135,7 @@ void rowdwt(int n) { //n is the current row number
  *  See also fwt97.
  */
 void rowiwt(int n) { //n is the current row
-  double a;
+  float a;
   int i;
 
   // Unpack
@@ -183,7 +183,7 @@ void rowiwt(int n) { //n is the current row
 }
 
 void coldiwt(int n){
-    double a;
+    float a;
     int i;
 
     // Unpack
@@ -237,13 +237,21 @@ int main() {
   // Makes a fancy cubic signal
   //for (i=0;i<32;i++) x[0][i]=5+i+0.4*i*i-0.02*i*i*i; //rows
 
-  for (i=0;i<32;i++) x[i][0]=5+i+0.4*i*i-0.02*i*i*i; //cols
+  for (i=0;i<ROWS;i++){
+    for (int j=0; j< COLS; j++){
+      x[i][j]=5+i+0.4*i*i-0.02*i*i*j;
+    }
+  }
 
   // Prints original sigal x
   printf("Original signal:\n");
   //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[i][0]); //cols
-  printf("\n");
+  for (i=0;i<ROWS;i++) {
+    for (j=0; j< COLS; j++){
+      printf("x[%d]=%f\n",i,x[i][j]); //cols
+      printf("\n");
+    }
+  }
 
   // Do the forward 9/7 transform
   //rowdwt(0);
@@ -252,7 +260,12 @@ int main() {
   // Prints the wavelet coefficients
   printf("Wavelets coefficients:\n");
   //for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[i][0]); //cols
+  for (i=0;i<ROWS;i++) {
+    for (j=0; j< COLS; j++){
+      printf("x[%d]=%f\n",i,x[i][j]); //cols
+      printf("\n");
+    }
+  }
   printf("\n");
 
   // Do the inverse 9/7 transform
@@ -262,5 +275,10 @@ int main() {
   // Prints the reconstructed signal
   printf("Reconstructed signal:\n");
   //for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[i][0]); //cols
+  for (i=0;i<ROWS;i++) {
+    for (j=0; j< COLS; j++){
+      printf("x[%d]=%f\n",i,x[i][j]); //cols
+      printf("\n");
+    }
+  }
 }
