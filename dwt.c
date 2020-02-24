@@ -7,25 +7,51 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 //double *tempbank=0;
 
-#define ROWS 64
-#define COLS 64
-
-float x [64][64];
-float tempbank [64];
+#define ROWS 10
+#define COLS 10
 
 float R[ROWS][COLS],G[ROWS][COLS],B[ROWS][COLS];
 float Y[ROWS][COLS],U[ROWS][COLS],V[ROWS][COLS];
+
+float x[ROWS][COLS];
+float tempbank[ROWS];
 float subU[ROWS/2][COLS/2],subV[ROWS/2][COLS/2];
+
+
+
+void readFile(){
+  FILE * fp;
+  fp = fopen("testImage.rgb","r");
+
+  for(int i = 0; i <833; i++){
+    for(int j = 0; j<833; j++){
+      uint8_t tempR,tempG,tempB;
+      fread(&tempR, 1, 1, fp);
+      fread(&tempG, (size_t)1, (size_t) 1, fp);
+      fread(&tempB, (size_t)1, (size_t) 1, fp);
+      if(i<ROWS && j<COLS){
+        R[i][j] = tempR;
+        G[i][j] = tempG;
+        B[i][j] = tempB;
+      }
+    }
+  }
+  fclose(fp);
+}
+
+
 
 void colorSpaceChange(){
   for(int i = 0; i < ROWS; i++){
     for(int j = 0; j < COLS; j++){
-      Y[i][j] = 0.299R[i][j] + 0.587G[i][j] + 0.114B[i][j];
-      U[i][j] = 0.492 (B[i][j]-Y[i][j]);
-      V[i][j] = 0.877 (R[i]-Y[j]);
+      Y[i][j] = 0.299* R[i][j] + 0.587*G[i][j] + 0.114*B[i][j];
+      U[i][j] = 0.492* (B[i][j]-Y[i][j]);
+      V[i][j] = 0.877* (R[i]-Y[j]);
     }
   }
 }
@@ -39,6 +65,27 @@ void chromaSubSampler(){
     }
   }
 }
+
+
+void quantizer(int startRow,int startCol, int numRows, int numCols, int q){
+    int i,j;
+    for(i = 0; i < numRows; i++){
+      for(j=0; j < numCols; j++){
+        x[i+startRow][j+startCol] = x[i+startRow][j+startCol]/q;
+      }
+    }
+}
+
+void dequantizer(int startRow,int startCol, int numRows, int numCols, int q){
+    int i,j;
+    for(i = 0; i < numRows; i++){
+      for(j=0; j < numCols; j++){
+        x[i+startRow][j+startCol] = x[i+startRow][j+startCol]*q;
+      }
+    }
+}
+
+
 void chromaUpSampler(){
   for(int i=0; i<ROWS; i+=2){
     for(int j=0; j<COLS; j+=2){
@@ -55,9 +102,6 @@ void chromaUpSampler(){
     }
   }
 }
-
-
-
 
 void coldwt(int n){ //n is the current col number
   float a;
@@ -106,6 +150,57 @@ void coldwt(int n){ //n is the current col number
   }
   for (i=0;i<ROWS;i++) x[i][n]=tempbank[i];
 }
+
+
+
+void partialcoldwt(int n,int startRow, int numRows){ //n is the current col number
+  float a;
+  int i;
+
+  // Predict 1tempbank
+  a=-1.586134342;
+  for (i=1;i<numRows-2;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[startRow + numRows-1][n]+=2*a*x[startRow+numRows-2][n];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<numRows;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[0+startRow][n]+=2*a*x[1+startRow][n];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<numRows-2;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[startRow+numRows-1][n]+=2*a*x[startRow+numRows-2][n];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<numRows;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[0+startRow][n]+=2*a*x[1+startRow][n];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<numRows;i++) {
+    if (i%2) x[i+startRow][n]*=a;
+    else x[i+startRow][n]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<numRows;i++) {
+    if (i%2==0) tempbank[i/2]=x[i+startRow][n];
+    else tempbank[numRows/2+i/2]=x[i+startRow][n];
+  }
+  for (i=0;i<numRows;i++) x[i+startRow][n]=tempbank[i];
+}
+
 
 
 
@@ -169,6 +264,57 @@ void rowdwt(int n) { //n is the current row number
   for (i=0;i<COLS;i++) x[n][i]=tempbank[i];
 }
 
+
+
+void partialrowdwt(int n,int startCol, int numCols){
+  float a;
+  int i;
+
+  // Predict 1
+  a=-1.586134342;
+  for (i=1+startCol;i<numCols-2;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][startCol+numCols-1]+=2*a*x[n][startCol+numCols-2];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<numCols;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][0+startCol]+=2*a*x[n][1+startCol];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<numCols-2;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][startCol+numCols-1]+=2*a*x[n][startCol+numCols-2];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<numCols;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][0+startCol]+=2*a*x[n][1+startCol];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<numCols;i++) {
+    if (i%2) x[n][i+startCol]*=a;
+    else x[n][i+startCol]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<numCols;i++) {
+    if (i%2==0) tempbank[i/2]=x[n][i+startCol];
+    else tempbank[numCols/2+i/2]=x[n][i+startCol];
+  }
+  for (i=0;i<numCols;i++) x[n][i+startCol]=tempbank[i];
+}
+
+
 /**
  *  iwt97 - Inverse biorthogonal 9/7 wavelet transform
  *
@@ -224,6 +370,55 @@ void rowiwt(int n) { //n is the current row
   x[n][COLS-1]+=2*a*x[n][COLS-2];
 }
 
+void partialrowiwt(int n,int startCol, int numCols){
+  float a;
+  int i;
+
+  // Unpack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<numCols/2;i++) {
+    tempbank[i*2]=x[n][i+startCol];
+    tempbank[i*2+1]=x[n][i+startCol+numCols/2];
+  }
+  for (i=0;i<numCols;i++) x[n][i+startCol]=tempbank[i];
+
+  // Undo scale
+  a=1.149604398;
+  for (i=0;i<numCols;i++) {
+    if (i%2) x[n][i+startCol]*=a;
+    else x[n][i+startCol]/=a;
+  }
+
+  // Undo update 2
+  a=-0.4435068522;
+  for (i=2;i<numCols;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][0+startCol]+=2*a*x[n][1+startCol];
+
+  // Undo predict 2
+  a=-0.8829110762;
+  for (i=1;i<numCols-2;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][numCols+startCol-1]+=2*a*x[n][numCols+startCol-2];
+
+  // Undo update 1
+  a=0.05298011854;
+  for (i=2;i<numCols;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][0+startCol]+=2*a*x[n][1+startCol];
+
+  // Undo predict 1
+  a=1.586134342;
+  for (i=1;i<numCols-2;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][numCols+startCol-1]+=2*a*x[n][numCols+startCol-2];
+}
+
+
 void coliwt(int n){
     float a;
     int i;
@@ -273,6 +468,181 @@ void coliwt(int n){
 }
 
 
+void partialcoliwt(int n,int startRow, int numRows){
+  float a;
+  int i;
+
+  // Unpack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<numRows/2;i++) {
+    tempbank[i*2]=x[i+startRow][n];
+    tempbank[i*2+1]=x[i+startRow+numRows/2][n];
+  }
+  for (i=0;i<numRows;i++) x[i+startRow][n]=tempbank[i];
+
+  // Undo scale
+  a=1.149604398;
+  for (i=0;i<numRows;i++) {
+    if (i%2) x[i+startRow][n]*=a;
+    else x[i+startRow][n]/=a;
+  }
+
+  // Undo update 2
+  a=-0.4435068522;
+  for (i=2;i<numRows;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[0+startRow][n]+=2*a*x[1+startRow][n];
+
+  // Undo predict 2
+  a=-0.8829110762;
+  for (i=1;i<numRows-2;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[startRow+numRows-1][n]+=2*a*x[startRow+numRows-2][n];
+
+  // Undo update 1
+  a=0.05298011854;
+  for (i=2;i<numRows;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[0+startRow][n]+=2*a*x[1+startRow][n];
+
+  // Undo predict 1
+  a=1.586134342;
+  for (i=1;i<numRows-2;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[startRow+numRows-1][n]+=2*a*x[startRow+numRows-2][n];
+
+}
+
+
+int main(){
+  int i,j;
+
+
+
+  /*for (i=0;i<ROWS;i++){
+    for (j=0; j< COLS; j++){
+      x[i][j]=round(5+i+0.4*i*i-0.02*i*i*j);
+    }
+  }*/
+
+  readFile();
+
+
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%f ",R[i][j]); //cols
+    }
+    printf("\n");
+  }
+
+
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%f ",x[i][j]); //cols
+    }
+    printf("\n");
+  }
+
+
+
+  printf("Original signal:\n");
+  //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%f ",x[i][j]); //cols
+    }
+    printf("\n");
+  }
+
+  for(i = 0; i <ROWS; i++){
+    rowdwt(i);
+  }
+  for(i = 0; i <COLS; i++){
+    coldwt(i);
+  }
+  for(i = 0; i<ROWS/2; i++){
+    partialrowdwt(i+ROWS/2, COLS/2, COLS/2);
+  }
+  for(i = 0; i <COLS/2; i++){
+    partialcoldwt(i+COLS/2, ROWS/2, ROWS/2);
+  }
+
+
+  quantizer(ROWS/2,COLS/2,ROWS/2,COLS/2,4);
+  quantizer(0,COLS/2,ROWS/2,COLS/2,2);
+  quantizer(ROWS/2,0,ROWS/2,COLS/2,2);
+
+  //ROUND coefficients
+  for (i=0;i<ROWS;i++) {
+    for (j=0; j< COLS; j++){
+      x[i][j] = round(x[i][j]); //cols
+    }
+  }
+
+
+
+
+  printf("Wavelets coefficients:\n");
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%f ",x[i][j]); //cols
+    }
+    printf("\n");
+  }
+  printf("\n");
+
+  dequantizer(ROWS/2,COLS/2,ROWS/2,COLS/2,4);
+  dequantizer(0,COLS/2,ROWS/2,COLS/2,2);
+  dequantizer(ROWS/2,0,ROWS/2,COLS/2,2);
+
+
+
+  for(i = 0; i <COLS/2; i++){
+    partialcoliwt(i+COLS/2, ROWS/2, ROWS/2);
+  }
+  for(i = 0; i<ROWS/2; i++){
+    partialrowiwt(i+ROWS/2, COLS/2, COLS/2);
+  }
+  for(i = 0; i <COLS; i++){
+    coliwt(i);
+  }
+  for(i = 0; i <ROWS; i++){
+    rowiwt(i);
+  }
+
+
+
+
+
+  printf("Reconstructed signal:\n");
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%f ",round(x[i][j])); //cols
+    }
+    printf("\n");
+  }
+
+
+
+
+
+}
+
+
+
+
+
+/*
+
 int main() {
   int i;
   int j;
@@ -288,19 +658,19 @@ int main() {
   // Prints original sigal x
   printf("Original signal:\n");
   //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<ROWS;i++) {
+  for (i=0;i<10;i++) {
     printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
+    for (j=0; j< 10; j++){
       printf("%f ",x[i][j]); //cols
     }
     printf("\n");
   }
 
   // Do the forward 9/7 transform
-  for(i = 0; i<ROWS; i++){
-    rowdwt(i);
-  }for(i = 0; i< COLS; i++){
-    coldwt(i);
+  for(i = 0; i<10; i++){
+    partialrowdwt(i,0,10);
+  }for(i = 0; i< 10; i++){
+    partialcoldwt(i,0,10);
   }
 
 
@@ -308,9 +678,9 @@ int main() {
   // Prints the wavelet coefficients
   printf("Wavelets coefficients:\n");
   //for (i=0;i<32;i++) printf("wc[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<ROWS;i++) {
+  for (i=0;i<10;i++) {
     printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
+    for (j=0; j< 10; j++){
       printf("%f ",x[i][j]); //cols
     }
     printf("\n");
@@ -319,20 +689,21 @@ int main() {
   printf("\n");
 
   // Do the inverse 9/7 transform
-  for(i = 0; i<ROWS; i++){
-    rowiwt(i);
-  }for(i = 0; i< COLS; i++){
-    coliwt(i);
+  for(i = 0; i<10; i++){
+    partialrowiwt(i,0,10);
+  }for(i = 0; i< 10; i++){
+    partialcoliwt(i,0,10);
   }
 
   // Prints the reconstructed signal
   printf("Reconstructed signal:\n");
   //for (i=0;i<32;i++) printf("xx[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<ROWS;i++) {
+  for (i=0;i<10;i++) {
     printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
+    for (j=0; j< 10; j++){
       printf("%f ",x[i][j]); //cols
     }
     printf("\n");
   }
 }
+*/
