@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void huffEncoding(int[] runLength, int length) {
+void huffEncoding(int[] arr, int length) {
     struct pixFreq {
         int value;
         int freq;
@@ -31,7 +31,7 @@ void huffEncoding(int[] runLength, int length) {
     int nodes = 0;
     for(int i = 0; i < length; i+=2){
       int count = arr[i+1];
-      for(int j=i+2; j<length; j+=2){
+      for(int j=i+2; j < length; j+=2){
           if(arr[i] == arr[j]){
             count+=arr[j+1];
             nodesArr[j/2].freq = 0;
@@ -51,7 +51,7 @@ void huffEncoding(int[] runLength, int length) {
     huffArr = (struct huffcode*)malloc(sizeof(struct huffcode) * nodes);
 
     //populate arrays
-    j = 0;
+    int j = 0;
     for (int i = 0; i < nodes; i++){
       if(nodesArr[i].freq != 0){
         //value and frequency
