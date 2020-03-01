@@ -1,4 +1,4 @@
-/**
+[ROWS][COLS]/**
  *  dwt97.c - Fast discrete biorthogonal CDF 9/7 wavelet forward and inverse transform (lifting implementation)
  *
  *  This code is provided "as is" and is given for educational purposes.
@@ -9,22 +9,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+#include "constants.h"
 //double *tempbank=0;
 
-#define ROWS 10
-#define COLS 10
 
-float R[ROWS][COLS],G[ROWS][COLS],B[ROWS][COLS];
-float Y[ROWS][COLS],U[ROWS][COLS],V[ROWS][COLS];
 
-float x[ROWS][COLS];
+
+//float x[ROWS][COLS];
 float tempbank[ROWS];
-float subU[ROWS/2][COLS/2],subV[ROWS/2][COLS/2];
 
-
-
-void readFile(){
+void readFile(float R[ROWS][COLS],float G[ROWS][COLS],float B[ROWS][COLS]){
   FILE * fp;
   fp = fopen("testImage.rgb","r");
 
@@ -46,7 +40,7 @@ void readFile(){
 
 
 
-void colorSpaceChange(){
+void colorSpaceChange(float R[ROWS][COLS],float G[ROWS][COLS],float B[ROWS][COLS],float Y[ROWS][COLS],float U[ROWS][COLS],float V[ROWS][COLS]){
   for(int i = 0; i < ROWS; i++){
     for(int j = 0; j < COLS; j++){
       Y[i][j] = 0.299* R[i][j] + 0.587*G[i][j] + 0.114*B[i][j];
@@ -57,7 +51,7 @@ void colorSpaceChange(){
 }
 
 // 4:2:2 sampling
-void chromaSubSampler(){
+void chromaSubSampler(float U[ROWS][COLS],float V[ROWS][COLS],float subU[ROWS][COLS],float subV[ROWS][COLS]){
   for(int i=0; i<ROWS; i+=2){
     for(int j=0; j<COLS; j+=2){
       subU[i/2][j/2] = U[i][j];
@@ -67,7 +61,7 @@ void chromaSubSampler(){
 }
 
 
-void quantizer(int startRow,int startCol, int numRows, int numCols, int q){
+void quantizer(float x[ROWS][COLS],int startRow,int startCol, int numRows, int numCols, int q){
     int i,j;
     for(i = 0; i < numRows; i++){
       for(j=0; j < numCols; j++){
@@ -76,7 +70,7 @@ void quantizer(int startRow,int startCol, int numRows, int numCols, int q){
     }
 }
 
-void dequantizer(int startRow,int startCol, int numRows, int numCols, int q){
+void dequantizer(float x[ROWS][COLS],int startRow,int startCol, int numRows, int numCols, int q){
     int i,j;
     for(i = 0; i < numRows; i++){
       for(j=0; j < numCols; j++){
@@ -86,7 +80,7 @@ void dequantizer(int startRow,int startCol, int numRows, int numCols, int q){
 }
 
 
-void chromaUpSampler(){
+void chromaUpSampler(float U[ROWS][COLS],float V[ROWS][COLS],float subU[ROWS][COLS],float subV[ROWS][COLS]){
   for(int i=0; i<ROWS; i+=2){
     for(int j=0; j<COLS; j+=2){
       U[i][j] = subU[i][j];
@@ -103,7 +97,7 @@ void chromaUpSampler(){
   }
 }
 
-void coldwt(int n){ //n is the current col number
+void coldwt(float x[ROWS][COLS],int n){ //n is the current col number
   float a;
   int i;
 
@@ -153,7 +147,7 @@ void coldwt(int n){ //n is the current col number
 
 
 
-void partialcoldwt(int n,int startRow, int numRows){ //n is the current col number
+void partialcoldwt(float x[ROWS][COLS],int n,int startRow, int numRows){ //n is the current col number
   float a;
   int i;
 
@@ -216,7 +210,7 @@ void partialcoldwt(int n,int startRow, int numRows){ //n is the current col numb
  *
  *  See also iwt97.
  */
-void rowdwt(int n) { //n is the current row number
+void rowdwt(float x[ROWS][COLS],int n) { //n is the current row number
   float a;
   int i;
 
@@ -266,7 +260,7 @@ void rowdwt(int n) { //n is the current row number
 
 
 
-void partialrowdwt(int n,int startCol, int numCols){
+void partialrowdwt(float x[ROWS][COLS],int n,int startCol, int numCols){
   float a;
   int i;
 
@@ -322,7 +316,7 @@ void partialrowdwt(int n,int startCol, int numCols){
  *
  *  See also fwt97.
  */
-void rowiwt(int n) { //n is the current row
+void rowiwt(float x[ROWS][COLS],int n) { //n is the current row
   float a;
   int i;
 
@@ -370,7 +364,7 @@ void rowiwt(int n) { //n is the current row
   x[n][COLS-1]+=2*a*x[n][COLS-2];
 }
 
-void partialrowiwt(int n,int startCol, int numCols){
+void partialrowiwt(float x[ROWS][COLS],int n,int startCol, int numCols){
   float a;
   int i;
 
@@ -419,7 +413,7 @@ void partialrowiwt(int n,int startCol, int numCols){
 }
 
 
-void coliwt(int n){
+void coliwt(float x[ROWS][COLS],int n){
     float a;
     int i;
 
@@ -468,7 +462,7 @@ void coliwt(int n){
 }
 
 
-void partialcoliwt(int n,int startRow, int numRows){
+void partialcoliwt(float x[ROWS][COLS],int n,int startRow, int numRows){
   float a;
   int i;
 
@@ -518,124 +512,7 @@ void partialcoliwt(int n,int startRow, int numRows){
 }
 
 
-int main(){
-  int i,j;
 
-
-
-  /*for (i=0;i<ROWS;i++){
-    for (j=0; j< COLS; j++){
-      x[i][j]=round(5+i+0.4*i*i-0.02*i*i*j);
-    }
-  }*/
-
-  readFile();
-
-
-  for (i=0;i<ROWS;i++) {
-    printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
-      printf("%f ",R[i][j]); //cols
-    }
-    printf("\n");
-  }
-
-
-  for (i=0;i<ROWS;i++) {
-    printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
-      printf("%f ",x[i][j]); //cols
-    }
-    printf("\n");
-  }
-
-
-
-  printf("Original signal:\n");
-  //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
-  for (i=0;i<ROWS;i++) {
-    printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
-      printf("%f ",x[i][j]); //cols
-    }
-    printf("\n");
-  }
-
-  for(i = 0; i <ROWS; i++){
-    rowdwt(i);
-  }
-  for(i = 0; i <COLS; i++){
-    coldwt(i);
-  }
-  for(i = 0; i<ROWS/2; i++){
-    partialrowdwt(i+ROWS/2, COLS/2, COLS/2);
-  }
-  for(i = 0; i <COLS/2; i++){
-    partialcoldwt(i+COLS/2, ROWS/2, ROWS/2);
-  }
-
-
-  quantizer(ROWS/2,COLS/2,ROWS/2,COLS/2,4);
-  quantizer(0,COLS/2,ROWS/2,COLS/2,2);
-  quantizer(ROWS/2,0,ROWS/2,COLS/2,2);
-
-  //ROUND coefficients
-  for (i=0;i<ROWS;i++) {
-    for (j=0; j< COLS; j++){
-      x[i][j] = round(x[i][j]); //cols
-    }
-  }
-
-
-
-
-  printf("Wavelets coefficients:\n");
-  for (i=0;i<ROWS;i++) {
-    printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
-      printf("%f ",x[i][j]); //cols
-    }
-    printf("\n");
-  }
-  printf("\n");
-
-  dequantizer(ROWS/2,COLS/2,ROWS/2,COLS/2,4);
-  dequantizer(0,COLS/2,ROWS/2,COLS/2,2);
-  dequantizer(ROWS/2,0,ROWS/2,COLS/2,2);
-
-
-
-  for(i = 0; i <COLS/2; i++){
-    partialcoliwt(i+COLS/2, ROWS/2, ROWS/2);
-  }
-  for(i = 0; i<ROWS/2; i++){
-    partialrowiwt(i+ROWS/2, COLS/2, COLS/2);
-  }
-  for(i = 0; i <COLS; i++){
-    coliwt(i);
-  }
-  for(i = 0; i <ROWS; i++){
-    rowiwt(i);
-  }
-
-
-
-
-
-  printf("Reconstructed signal:\n");
-  for (i=0;i<ROWS;i++) {
-    printf("x[%d]=",i);
-    for (j=0; j< COLS; j++){
-      printf("%f ",round(x[i][j])); //cols
-    }
-    printf("\n");
-  }
-
-
-
-
-
-}
 
 
 
