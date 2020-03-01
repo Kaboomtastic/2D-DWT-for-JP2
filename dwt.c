@@ -1,4 +1,4 @@
-[ROWS][COLS]/**
+/**
  *  dwt97.c - Fast discrete biorthogonal CDF 9/7 wavelet forward and inverse transform (lifting implementation)
  *
  *  This code is provided "as is" and is given for educational purposes.
@@ -13,9 +13,6 @@
 //double *tempbank=0;
 
 
-
-
-//float x[ROWS][COLS];
 float tempbank[ROWS];
 
 void readFile(float R[ROWS][COLS],float G[ROWS][COLS],float B[ROWS][COLS]){
