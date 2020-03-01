@@ -145,6 +145,7 @@ void huffEncoding(int *arr, int length) {
     }
 
     printf("Huffman Codes for Coefficients\n");
+    printf("%d", nodes);
     for(int i = 0; i < nodes; i++){
       printf("%d          -> %s", freqArr[i].value, freqArr[i].code);
     }
