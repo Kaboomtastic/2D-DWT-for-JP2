@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void huffEncoding(void) {
+void huffEncoding(int[] runLength, int length) {
     struct pixFreq {
         int value;
         int freq;
@@ -20,9 +20,11 @@ void huffEncoding(void) {
       int freq;
     }
 
+
+
     struct pixFreq* freqArr;
     struct huffcode* huffArr;
-    struct nodes* nodesArr = (struct nodes*)malloc(sizeof(struct nodes) * (***length of encoded array/2));
+    struct nodes* nodesArr = (struct nodes*)malloc(sizeof(struct nodes) * (length/2));
 
 
 
