@@ -26,7 +26,7 @@ void compress(){
   quantizer(R,0,COLS/2,ROWS/2,COLS/2,2);
   quantizer(R,ROWS/2,0,ROWS/2,COLS/2,2);
 
-
+  printf("quantized\n");
 
 
   for (i=0;i<ROWS;i++) {
@@ -36,10 +36,11 @@ void compress(){
   }
     // run Length Encoding
   int* runLength = encode(sizeof(QuantizedTemp)/sizeof(QuantizedTemp[0]), sizeof(QuantizedTemp[0])/sizeof(QuantizedTemp[0][0]), QuantizedTemp);
-  int length = sizeof(runLength)/sizeof(runLength[0]);
+  printf("runlengthed\n");
+  //int length = sizeof(runLength)/sizeof(runLength[0]);
 
   //huffman Encoding
-  huffEncoding(runLength, length);
+  huffEncoding(runLength);
 
 
 }
@@ -74,9 +75,13 @@ void decompress(){
 int main(){
   int i,j;
 
-  readFile(R,G,B);
+  //readFile(R,G,B);
 
-
+  for (i=0;i<ROWS;i++){
+    for (j=0; j< COLS; j++){
+      R[i][j]=round(5+i+0.4*i*i-0.02*i*i*j);
+    }
+  }
 
   printf("Original signal:\n");
   //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows

@@ -11,7 +11,7 @@ void concatenate(char *currCode, char *prevCode, char direction){
   *(currCode+i+1) = '\0';
 }
 
-void huffEncoding(int *arr, int length) {
+void huffEncoding(int *arr) {
     struct pixFreq {
         int value;
         int freq;
@@ -31,15 +31,15 @@ void huffEncoding(int *arr, int length) {
     };
 
 
-
+    int length = arr[0];
     struct pixFreq* freqArr;
     struct huffcode* huffArr;
     struct nodes* nodesArr = (struct nodes*)malloc(sizeof(struct nodes) * (length/2));
 
 
 
-    int nodes = 0;
-    for(int i = 0; i < length; i+=2){
+    int nodes = length/2;
+    for(int i = 1; i < length; i+=2){
       int count = arr[i+1];
       for(int j=i+2; j<length; j+=2){
           if(arr[i] == arr[j]){
@@ -51,7 +51,6 @@ void huffEncoding(int *arr, int length) {
       if(nodesArr[i/2].freq != 0){
         nodesArr[i/2].freq = count;
         nodesArr[i/2].value = arr[i];
-        nodes++;
       }
     }
 
