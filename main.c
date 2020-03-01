@@ -8,6 +8,7 @@ float Y[ROWS][COLS],U[ROWS][COLS],V[ROWS][COLS];
 float subU[ROWS/2][COLS/2],subV[ROWS/2][COLS/2];
 
 void compress(){
+  int i,j;
   for(i = 0; i <ROWS; i++){
     rowdwt(R,i);
   }
@@ -25,6 +26,12 @@ void compress(){
   quantizer(R,0,COLS/2,ROWS/2,COLS/2,2);
   quantizer(R,ROWS/2,0,ROWS/2,COLS/2,2);
 
+  for (i=0;i<ROWS;i++) {
+    for (j=0; j< COLS; j++){
+      R[i][j] = round(R[i][j]); //cols
+    }
+  }
+
   // run Length Encoding
   int* runLength = encode(sizeof(R)/sizeof(R[0]), sizeof(R[0]),sizeof(R[0][0]), R);
   int length = sizeof(runLength)/sizeof(runLength[0]);
@@ -37,7 +44,7 @@ void compress(){
 
 
 void decompress(){
-
+  int i,j;
   // run Length Decoding
   // int* decode = decode();
 
@@ -80,7 +87,7 @@ void main(){
   for (i=0;i<ROWS;i++) {
     printf("x[%d]=",i);
     for (j=0; j< COLS; j++){
-      printf("%f ",x[i][j]); //cols
+      printf("%f ",R[i][j]); //cols
     }
     printf("\n");
   }
@@ -92,7 +99,7 @@ void main(){
   for (i=0;i<ROWS;i++) {
     printf("x[%d]=",i);
     for (j=0; j< COLS; j++){
-      printf("%f ",x[i][j]); //cols
+      printf("%f ",R[i][j]); //cols
     }
     printf("\n");
   }
@@ -103,7 +110,7 @@ void main(){
   //ROUND coefficients
   for (i=0;i<ROWS;i++) {
     for (j=0; j< COLS; j++){
-      x[i][j] = round(x[i][j]); //cols
+      R[i][j] = round(R[i][j]); //cols
     }
   }
 
@@ -114,7 +121,7 @@ void main(){
   for (i=0;i<ROWS;i++) {
     printf("x[%d]=",i);
     for (j=0; j< COLS; j++){
-      printf("%f ",x[i][j]); //cols
+      printf("%f ",R[i][j]); //cols
       }
       printf("\n");
     }
@@ -128,7 +135,7 @@ void main(){
     for (i=0;i<ROWS;i++) {
       printf("x[%d]=",i);
       for (j=0; j< COLS; j++){
-        printf("%f ",round(x[i][j])); //cols
+        printf("%f ",round(R[i][j])); //cols
       }
       printf("\n");
     }

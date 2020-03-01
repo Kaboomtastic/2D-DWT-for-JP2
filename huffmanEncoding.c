@@ -1,7 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void huffEncoding(int[] arr, int length) {
+void concatenate(char *currCode, char *prevCode, char direction){
+  int i = 0;
+  while(*(prevCode+i) != '\0') {
+    *(currCode+i) = *(prevCode+i);
+    i++;
+  }
+  *(currCode+i) = direction;
+  *(currCode+i+1) = '\0';
+}
+
+void huffEncoding(int *arr, int length) {
     struct pixFreq {
         int value;
         int freq;
@@ -18,7 +28,7 @@ void huffEncoding(int[] arr, int length) {
     struct nodes {
       int value;
       int freq;
-    }
+    };
 
 
 
@@ -31,7 +41,7 @@ void huffEncoding(int[] arr, int length) {
     int nodes = 0;
     for(int i = 0; i < length; i+=2){
       int count = arr[i+1];
-      for(int j=i+2; j < length; j+=2){
+      for(int j=i+2; j<length; j+=2){
           if(arr[i] == arr[j]){
             count+=arr[j+1];
             nodesArr[j/2].freq = 0;
@@ -74,13 +84,13 @@ void huffEncoding(int[] arr, int length) {
     }
 
     //sort probabilities
-    struct huffcodes temp;
+    struct huffcode temp;
     for (int i=0; i < nodes; i++){
       for (int j=i+1; j < nodes; j++){
-        if (huffcodes[i].freq < huffcodes[j].freq){
-            temp = huffcodes[i];
-            huffcodes[i] = huffcodes[j];
-            huffcodes[j] = temp;
+        if (huffArr[i].freq < huffArr[j].freq){
+            temp = huffArr[i];
+            huffArr[i] = huffArr[j];
+            huffArr[j] = temp;
         }
       }
     }
@@ -103,7 +113,7 @@ void huffEncoding(int[] arr, int length) {
       freqArr[newNode].right = &freqArr[huffArr[nodes-n-1].arrloc];
       freqArr[newNode].code[0] = '\0';
 
-      i = 0;
+      int i = 0;
       while (sumFreq <= huffArr[i].freq) {
         i++;
       }
@@ -125,23 +135,13 @@ void huffEncoding(int[] arr, int length) {
     char left = '0';
     char right = '1';
     int index;
-    for (i = totalNodes-1; i >= nodes; i--){
+    for (int i = totalNodes-1; i >= nodes; i--){
       if(freqArr[i].left != NULL){
         concatenate(freqArr[i].left->code, freqArr[i].code, left);
       }
       if(freqArr[i].right != NULL){
         concatenate(freqArr[i].right->code, freqArr[i].code, right);
       }
-    }
-
-    void concatenate(char* currCode, char* prevCode, char direction){
-      int i = 0;
-      while(*(prevCode+i) != '\0') {
-        *(currCode+i) = *(prevCode+i);
-        i++;
-      }
-      *(currCode+i) = direction;
-      *(currCode+i+1) = '\0';
     }
 
     printf("Huffman Codes for Coefficients\n");
