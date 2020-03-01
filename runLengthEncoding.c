@@ -16,7 +16,7 @@ int* encode(int m, int n, int src[m][n])
     int* dest = (int*)malloc(sizeof(int) * (numRows*numCols * 2 + 1));
 
     int i, l = 0;
-    int countIdx = 0;
+    int count = 0;
 
     // traverse the input string one by one
     for (i = 0; i < numRows; i++) {
@@ -40,6 +40,7 @@ int* encode(int m, int n, int src[m][n])
 
             dest[l+1] = rLen;
             l += 2;
+            count += 2;
         }
 
 
@@ -52,7 +53,7 @@ int* encode(int m, int n, int src[m][n])
     // for(int i=0;dest[i] != NULL;i++){
     //     printf("%d ", dest[i]);
     // }
-
+    dest[0] = count;
     return dest;
 }
 
