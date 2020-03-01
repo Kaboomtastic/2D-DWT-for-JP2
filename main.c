@@ -6,7 +6,7 @@
 float R[ROWS][COLS],G[ROWS][COLS],B[ROWS][COLS];
 float Y[ROWS][COLS],U[ROWS][COLS],V[ROWS][COLS];
 float subU[ROWS/2][COLS/2],subV[ROWS/2][COLS/2];
-
+int QuantizedTemp = [ROWS][COLS]
 void compress(){
   int i,j;
   for(i = 0; i <ROWS; i++){
@@ -26,14 +26,16 @@ void compress(){
   quantizer(R,0,COLS/2,ROWS/2,COLS/2,2);
   quantizer(R,ROWS/2,0,ROWS/2,COLS/2,2);
 
+
+
+
   for (i=0;i<ROWS;i++) {
     for (j=0; j< COLS; j++){
-      R[i][j] = round(R[i][j]); //cols
+      QuantizedTemp = round(R[i][j]); //cols
     }
   }
-
-  // run Length Encoding
-  int* runLength = encode(sizeof(R)/sizeof(R[0]), sizeof(R[0]),sizeof(R[0][0]), R);
+    // run Length Encoding
+  int* runLength = encode(sizeof(QuantizedTemp)/sizeof(QuantizedTemp[0]), sizeof(QuantizedTemp[0]),sizeof(QuantizedTemp[0][0]), QuantizedTemp);
   int length = sizeof(runLength)/sizeof(runLength[0]);
 
   //huffman Encoding
