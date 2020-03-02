@@ -26,19 +26,41 @@ void compress(){
   quantizer(R,0,COLS/2,ROWS/2,COLS/2,2);
   quantizer(R,ROWS/2,0,ROWS/2,COLS/2,2);
 
-  printf("quantized\n");
+
+  printf("Pre quanitized Coefficients:\n");
+  //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
+
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%f ",R[i][j]); //cols
+    }
+    printf("\n");
+  }
 
 
   for (i=0;i<ROWS;i++) {
     for (j=0; j< COLS; j++){
-      QuantizedTemp[i][j] = round(R[i][j]); //cols
+      QuantizedTemp[i][j] = (int) round(R[i][j]); //cols
     }
   }
+
+  printf("Quanitized Coefficients:\n");
+  //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
+  for (i=0;i<ROWS;i++) {
+    printf("x[%d]=",i);
+    for (j=0; j< COLS; j++){
+      printf("%d ",QuantizedTemp[i][j]); //cols
+    }
+    printf("\n");
+  }
+
     // run Length Encoding
   int* runLength = encode(sizeof(QuantizedTemp)/sizeof(QuantizedTemp[0]), sizeof(QuantizedTemp[0])/sizeof(QuantizedTemp[0][0]), QuantizedTemp);
   printf("runlengthed\n");
   //int length = sizeof(runLength)/sizeof(runLength[0]);
 
+  printf("%d\n", runLength[0]);
   //huffman Encoding
   huffEncoding(runLength);
 

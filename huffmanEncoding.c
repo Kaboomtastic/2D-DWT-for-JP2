@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "huffmanEncoding.h"
+//#include "huffmanEncoding.h"
 
 void concatenate(char *currCode, char *prevCode, char direction){
     int i = 0;
@@ -163,4 +163,3 @@ void huffEncoding(int *arr) {
         printf("%d           -> %s\n", freqArr[i].value, freqArr[i].code);
     }
 }
-
