@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-//#include "huffmanEncoding.h"
+#include "huffmanEncoding.h"
 
 void concatenate(char *currCode, char *prevCode, char direction){
     int i = 0;
@@ -40,8 +40,8 @@ void huffEncoding(int *arr) {
     struct nodes nodesArr[length/2];
     //struct nodes *nodesArr = malloc((sizeof *nodesArr) * (length/2));
     for (int i = 0; i < length/2; i++){
-        nodesArr[i].freq = -1;
-        nodesArr[i].value = -1;
+        nodesArr[i].freq = 255;
+        nodesArr[i].value = 255;
     }
 
     for(int i = 1; i < length; i+=2){
@@ -49,11 +49,11 @@ void huffEncoding(int *arr) {
         for(int j=i+2; j<length; j+=2){
             if(arr[i] == arr[j]){
                 count+=arr[j+1];
-                nodesArr[j/2].freq = -2;
-                nodesArr[j/2].value = -2;
+                nodesArr[j/2].freq = 256;
+                nodesArr[j/2].value = 256;
             }
         }
-        if(nodesArr[i/2].value != -2){
+        if(nodesArr[i/2].value != 256){
             nodesArr[i/2].freq = count;
             nodesArr[i/2].value = arr[i];
         }
@@ -61,7 +61,7 @@ void huffEncoding(int *arr) {
 
     int nodes = 0;
     for(int i = 0; i < length/2; i++){
-        if(nodesArr[i].freq != -2){
+        if(nodesArr[i].freq != 256){
             nodes++;
         }
     }
@@ -77,7 +77,7 @@ void huffEncoding(int *arr) {
     //populate arrays
     int j = 0;
     for (int i = 0; i < length/2; i++){
-        if(nodesArr[i].freq != -2){
+        if(nodesArr[i].freq != 256){
             //value and frequency
             huffArr[j].value = nodesArr[i].value;
             huffArr[j].freq = nodesArr[i].freq;
@@ -163,3 +163,4 @@ void huffEncoding(int *arr) {
         printf("%d           -> %s\n", freqArr[i].value, freqArr[i].code);
     }
 }
+
