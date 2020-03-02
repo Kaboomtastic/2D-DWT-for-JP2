@@ -15,7 +15,7 @@ int* encode(int m, int n, int src[m][n])
     then size of destination [] would be twice of input [].*/
     int* dest = (int*)malloc(sizeof(int) * (numRows*numCols * 2 + 1));
 
-    int i, l = 0;
+    int i, l = 1;
     int countIdx = 0;
 
     // traverse the input string one by one
@@ -60,6 +60,9 @@ int* encode(int m, int n, int src[m][n])
 int* decode(int* src)
 {
     int count;
+
+    // need length of input string for for loop ending
+    // i < src[0];
 
     /* If all integers in the source string are different,
     then size of destination [] would be twice of input [].*/
