@@ -13,32 +13,49 @@ int divisorArray[ROWS][COLS];
 int subDivisorARRAY[ROWS/2][COLS/2];
 
 void quantize(){
-  int i,j,k,l;
-  for(k = 0; k < 64; k*=2){
-    for(l = 0; l < 64; l*=2){
-      for(i = 0; i < ROWS; i++){
-        for(j = 0; j < COLS; j++){
-          if(i >= k && j >= l){
-            divisorArray[i][j] += 1;
-          }
-        }
-        if(l == 0) l =1;
-      }
-      if(k == 0) k =1;
-    }
 
-  }
-  printf("\n");
-  for(i = 0; i < ROWS; i++){
-    for(j = 0; j < COLS; j++){
-      printf("%d ", divisorArray[i][j]);
-    }
-    printf("\n");
-  }
+  quantizer(Y,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right
+  quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
+  quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
+  quantizer(Y,0,COLS/8,ROWS/8,COLS/8,2);
+  quantizer(Y,ROWS/8,0,ROWS/8,COLS/8,2); //top left corners
+  quantizer(Y,0,0,ROWS/8,COLS/8,1); //top left
+  subquantizer(subU,ROWS/4,COLS/4,ROWS/4,COLS/4,8);
+  subquantizer(subU,0,COLS/4,ROWS/4,COLS/4,4);
+  subquantizer(subU,ROWS/4,0,ROWS/4,COLS/4,4);
+  subquantizer(subU,0,0,ROWS/4,COLS/4,2);
+
+  subquantizer(subV,ROWS/4,COLS/4,ROWS/4,COLS/4,8);
+  subquantizer(subV,0,COLS/4,ROWS/4,COLS/4,4);
+  subquantizer(subV,ROWS/4,0,ROWS/4,COLS/4,4);
+  subquantizer(subV,0,0,ROWS/4,COLS/4,2);
 
 
 }
-/*quantizer(Y,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right
+/*
+int i,j,k,l;
+for(k = 0; k < 64; k*=2){
+  for(l = 0; l < 64; l*=2){
+    for(i = 0; i < ROWS; i++){
+      for(j = 0; j < COLS; j++){
+        if(i >= k && j >= l){
+          divisorArray[i][j] += 1;
+        }
+      }
+      if(l == 0) l =1;
+    }
+    if(k == 0) k =1;
+  }
+
+}
+printf("\n");
+for(i = 0; i < ROWS; i++){
+  for(j = 0; j < COLS; j++){
+    printf("%d ", divisorArray[i][j]);
+  }
+  printf("\n");
+}
+quantizer(Y,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right
 quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
 quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
 quantizer(Y,0,COLS/8,ROWS/8,COLS/8,2);
@@ -52,8 +69,8 @@ subquantizer(subU,0,0,ROWS/4,COLS/4,2);
 subquantizer(subV,ROWS/4,COLS/4,ROWS/4,COLS/4,8);
 subquantizer(subV,0,COLS/4,ROWS/4,COLS/4,4);
 subquantizer(subV,ROWS/4,0,ROWS/4,COLS/4,4);
-subquantizer(subV,0,0,ROWS/4,COLS/4,2);*/
-
+subquantizer(subV,0,0,ROWS/4,COLS/4,2);
+*/
 void dwtize(){
   int i,j;
   for(i = 0; i <ROWS; i++){
