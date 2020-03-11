@@ -21,7 +21,7 @@ void readFile(float R[ROWS][COLS],float G[ROWS][COLS],float B[ROWS][COLS]){
 
   for(int i = 0; i <833; i++){
     for(int j = 0; j<833; j++){
-      uint8_t tempR,tempG,tempB;
+      u_int8_t tempR,tempG,tempB;
       fread(&tempR, 1, 1, fp);
       fread(&tempG, (size_t)1, (size_t) 1, fp);
       fread(&tempB, (size_t)1, (size_t) 1, fp);
@@ -42,13 +42,13 @@ void colorSpaceChange(float R[ROWS][COLS],float G[ROWS][COLS],float B[ROWS][COLS
     for(int j = 0; j < COLS; j++){
       Y[i][j] = 0.299* R[i][j] + 0.587*G[i][j] + 0.114*B[i][j];
       U[i][j] = 0.492* (B[i][j]-Y[i][j]);
-      V[i][j] = 0.877* (R[i]-Y[j]);
+      V[i][j] = 0.877* (R[i][j]-Y[i][j]);
     }
   }
 }
 
 // 4:2:2 sampling
-void chromaSubSampler(float U[ROWS][COLS],float V[ROWS][COLS],float subU[ROWS][COLS],float subV[ROWS][COLS]){
+void chromaSubSampler(float U[ROWS][COLS],float V[ROWS][COLS],float subU[ROWS/2][COLS/2],float subV[ROWS/2][COLS/2]){
   for(int i=0; i<ROWS; i+=2){
     for(int j=0; j<COLS; j+=2){
       subU[i/2][j/2] = U[i][j];
@@ -59,6 +59,15 @@ void chromaSubSampler(float U[ROWS][COLS],float V[ROWS][COLS],float subU[ROWS][C
 
 
 void quantizer(float x[ROWS][COLS],int startRow,int startCol, int numRows, int numCols, int q){
+    int i,j;
+    for(i = 0; i < numRows; i++){
+      for(j=0; j < numCols; j++){
+        x[i+startRow][j+startCol] = x[i+startRow][j+startCol]/q;
+      }
+    }
+}
+
+void subquantizer(float x[ROWS/2][COLS/2],int startRow,int startCol, int numRows, int numCols, int q){
     int i,j;
     for(i = 0; i < numRows; i++){
       for(j=0; j < numCols; j++){
@@ -511,6 +520,101 @@ void partialcoliwt(float x[ROWS][COLS],int n,int startRow, int numRows){
 
 
 
+void subPartialcoldwt(float x[ROWS/2][COLS/2],int n,int startRow, int numRows){ //n is the current col number
+  float a;
+  int i;
+
+  // Predict 1tempbank
+  a=-1.586134342;
+  for (i=1;i<numRows-2;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[startRow + numRows-1][n]+=2*a*x[startRow+numRows-2][n];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<numRows;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[0+startRow][n]+=2*a*x[1+startRow][n];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<numRows-2;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[startRow+numRows-1][n]+=2*a*x[startRow+numRows-2][n];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<numRows;i+=2) {
+    x[i+startRow][n]+=a*(x[i+startRow-1][n]+x[i+startRow+1][n]);
+  }
+  x[0+startRow][n]+=2*a*x[1+startRow][n];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<numRows;i++) {
+    if (i%2) x[i+startRow][n]*=a;
+    else x[i+startRow][n]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<numRows;i++) {
+    if (i%2==0) tempbank[i/2]=x[i+startRow][n];
+    else tempbank[numRows/2+i/2]=x[i+startRow][n];
+  }
+  for (i=0;i<numRows;i++) x[i+startRow][n]=tempbank[i];
+}
+
+void subPartialrowdwt(float x[ROWS/2][COLS/2],int n,int startCol, int numCols){
+  float a;
+  int i;
+
+  // Predict 1
+  a=-1.586134342;
+  for (i=1+startCol;i<numCols-2;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][startCol+numCols-1]+=2*a*x[n][startCol+numCols-2];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<numCols;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][0+startCol]+=2*a*x[n][1+startCol];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<numCols-2;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][startCol+numCols-1]+=2*a*x[n][startCol+numCols-2];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<numCols;i+=2) {
+    x[n][i+startCol]+=a*(x[n][i+startCol-1]+x[n][i+startCol+1]);
+  }
+  x[n][0+startCol]+=2*a*x[n][1+startCol];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<numCols;i++) {
+    if (i%2) x[n][i+startCol]*=a;
+    else x[n][i+startCol]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<numCols;i++) {
+    if (i%2==0) tempbank[i/2]=x[n][i+startCol];
+    else tempbank[numCols/2+i/2]=x[n][i+startCol];
+  }
+  for (i=0;i<numCols;i++) x[n][i+startCol]=tempbank[i];
+}
 
 
 

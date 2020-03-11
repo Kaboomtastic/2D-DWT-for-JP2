@@ -7,7 +7,7 @@
 int* encode(int m, int n, int src[m][n])
 {
     int rLen;
-    int count[m*n];
+    //int count[m*n];
     int numRows = m;
     int numCols = n;
 
@@ -15,33 +15,43 @@ int* encode(int m, int n, int src[m][n])
     then size of destination [] would be twice of input [].*/
     int* dest = (int*)malloc(sizeof(int) * (numRows*numCols * 2 + 1));
 
+    for(int i =0; i < numRows*numCols*2; i++){
+      dest[i] = 0;
+    }
+
     int i, l = 1;
     int countIdx = 0;
 
     // traverse the input string one by one
-    for (i = 0; i < numRows; i++) {
-        for(int j = 0; j < numCols; j++){
+    for (i = 0; i < numRows*numCols; i++) {
+        //for(int j = 0; j < numCols; j++){
+            //if(1==1){//src[i][j] == 0){
+              /* Copy the first occurrence of the new integer */
+              dest[l] = src[i/numCols][i%numCols];
 
-            /* Copy the first occurrence of the new integer */
-            dest[l] = src[i][j];
+              // TESTING
+              // printf("Number: %d", src[i][j]);
 
-            // TESTING
-            // printf("Number: %d", src[i][j]);
+              /* Count the number of occurrences of the new integer */
+              rLen = 1;
+              while (i < numCols*numRows && src[i/numCols][i%numCols] == src[i/numCols][i%numCols+1]) {
+                  rLen++;
+                  i++;
+              }
 
-            /* Count the number of occurrences of the new integer */
-            rLen = 1;
-            while (j + 1 < numCols && src[i][j] == src[i][j+1]) {
-                rLen++;
-                j++;
-            }
+              // TESTING
+              // printf("    Freq: %d \n", rLen);
 
-            // TESTING
-            // printf("    Freq: %d \n", rLen);
+              dest[l+1] = rLen;
+              l += 2;
+              countIdx += 2;
+            /*}else{
+              dest[l] = src[i][j];
+              l+=1;
+              countIdx += 1;
+            }*/
 
-            dest[l+1] = rLen;
-            l += 2;
-            countIdx += 2;
-        }
+        //}
 
 
     }

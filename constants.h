@@ -1,3 +1,3 @@
 
-#define ROWS 10
-#define COLS 10
+#define ROWS 64
+#define COLS 64
