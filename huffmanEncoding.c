@@ -6,6 +6,8 @@
 #include <stdio.h>
 //#include "huffmanEncoding.h"
 
+int numNodes = 1024;
+
 void concatenate(char *currCode, char *prevCode, char direction){
     int i = 0;
     while(*(prevCode+i) != '\0') {
@@ -54,18 +56,18 @@ void huffEncodingNEW(int *runLength) {
       int freq;
   };
 
-  struct nodes nodesArr[256];
+  struct nodes nodesArr[numNodes];
 
-  for (int i = 0; i < 256; i++){
+  for (int i = 0; i < numNodes; i++){
       nodesArr[i].freq = 0;
-      nodesArr[i].value = 256;
+      nodesArr[i].value = numNodes;
   }
 
   int tempVal = 0;
   for(int i = 1; i <= length; i++){
     //printf("%d\n",runLength[i]);
     tempVal = runLength[i];
-    if(nodesArr[tempVal].value == 256){
+    if(nodesArr[tempVal].value == numNodes){
       nodesArr[tempVal].freq = 1;
       nodesArr[tempVal].value = tempVal;
     }else{
@@ -76,21 +78,21 @@ void huffEncodingNEW(int *runLength) {
 
 
   int nodes = 0;
-  for(int i = 0; i < 256; i++){
-      if(nodesArr[i].value != 256){
+  for(int i = 0; i < numNodes; i++){
+      if(nodesArr[i].value != numNodes){
           nodes++;
       }
   }
 
   //int totalNodes = nodes;
-  struct pixFreq freqArr[256];
-  struct huffcode huffArr[256];
+  struct pixFreq freqArr[numNodes];
+  struct huffcode huffArr[numNodes];
 
   //printf("nodes(%d)\n",nodes );
 
   int j = 0;
 
-  for(int i = 0; i < 256; i++){
+  for(int i = 0; i < numNodes; i++){
     freqArr[i].code = (char*)malloc(sizeof(char) * ROWS);
     freqArr[j].left = NULL;
     freqArr[j].right = NULL;
@@ -98,9 +100,9 @@ void huffEncodingNEW(int *runLength) {
 
   }
 
-  for (int i = 0; i < 256; i++){
+  for (int i = 0; i < numNodes; i++){
 
-      if(nodesArr[i].value != 256){
+      if(nodesArr[i].value != numNodes){
 
           //value and frequency
           huffArr[j].value = nodesArr[i].value;
@@ -219,7 +221,7 @@ void huffEncodingNEW(int *runLength) {
     charCount = 0;
     int ValToReplace = runLength[count];
     char* valCode;
-    for(int i = 0; i < 256; i++){
+    for(int i = 0; i < numNodes; i++){
       if(ValToReplace == freqArr[i].value){
         valCode = freqArr[i].code;
         break;
@@ -320,11 +322,11 @@ void huffEncoding(int *arr) {
         for(int j=i+2; j<length; j+=2){
             if(arr[i] == arr[j]){
                 count+=arr[j+1];
-                nodesArr[j/2].freq = 256;
-                nodesArr[j/2].value = 256;
+                nodesArr[j/2].freq = numNodes;
+                nodesArr[j/2].value = numNodes;
             }
         }
-        if(nodesArr[i/2].value != 256){
+        if(nodesArr[i/2].value != numNodes){
             nodesArr[i/2].freq = count;
             nodesArr[i/2].value = arr[i];
         }
@@ -332,7 +334,7 @@ void huffEncoding(int *arr) {
 
     int nodes = 0;
     for(int i = 0; i < length/2; i++){
-        if(nodesArr[i].freq != 256){
+        if(nodesArr[i].freq != numNodes){
             nodes++;
         }
     }
@@ -348,7 +350,7 @@ void huffEncoding(int *arr) {
     //populate arrays
     int j = 0;
     for (int i = 0; i < length/2; i++){
-        if(nodesArr[i].freq != 256){
+        if(nodesArr[i].freq != numNodes){
             //value and frequency
             huffArr[j].value = nodesArr[i].value;
             huffArr[j].freq = nodesArr[i].freq;

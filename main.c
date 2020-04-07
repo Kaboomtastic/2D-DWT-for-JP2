@@ -14,12 +14,18 @@ int subDivisorARRAY[ROWS/2][COLS/2];
 
 void quantize(){
 
-  quantizer(Y,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right
-  quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
+  quantizer(Y,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right quadrant
+  quantizer(Y,ROWS/2,0,ROWS/2,COLS/2,6); //lower left quadrant
+  quantizer(Y,0,COLS/2,ROWS/2,COLS/2,6); //upper right quadrant
+  quantizer(Y,0,0,ROWS/2,COLS/2,2);
+
+  /*quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
   quantizer(Y,ROWS/8,COLS/8,ROWS/8,COLS/8,3);
   quantizer(Y,0,COLS/8,ROWS/8,COLS/8,2);
   quantizer(Y,ROWS/8,0,ROWS/8,COLS/8,2); //top left corners
-  quantizer(Y,0,0,ROWS/8,COLS/8,1); //top left
+  quantizer(Y,0,0,ROWS/8,COLS/8,1); //top left */
+
+
   subquantizer(subU,ROWS/4,COLS/4,ROWS/4,COLS/4,8);
   subquantizer(subU,0,COLS/4,ROWS/4,COLS/4,4);
   subquantizer(subU,ROWS/4,0,ROWS/4,COLS/4,4);
@@ -79,18 +85,12 @@ void dwtize(){
   for(i = 0; i <COLS; i++){
     coldwt(Y,i);
   }
-
+  /*
   for(i = 0; i<ROWS/2; i++){
     partialrowdwt(Y,i, 0, COLS/2);
   }
   for(i = 0; i <COLS/2; i++){
     partialcoldwt(Y,i, 0, ROWS/2);
-  }
-  for(i = 0; i<ROWS/4; i++){
-    partialrowdwt(Y,i, 0, COLS/4);
-  }
-  for(i = 0; i <COLS/4; i++){
-    partialcoldwt(Y,i, 0, ROWS/4);
   }
 
   for(i = 0; i<ROWS/2; i++){
@@ -106,6 +106,7 @@ void dwtize(){
   for(i = 0; i <COLS/2; i++){
     partialcoldwt(Y,0, ROWS/2, ROWS/2);
   }
+  */
 
 
 
@@ -248,7 +249,7 @@ void compress(){
   huffEncodingNEW(runLength);
 
 /////////////////////////////////////////////
-
+  /*
   for (i=0;i<ROWS/2;i++) {
     for (j=0; j< COLS/2; j++){
       subQuantizedTemp[i][j] = (int) round(subU[i][j]); //cols
@@ -293,7 +294,7 @@ void compress(){
     printf("%d\t",runLength[i] );
   }printf("\n" );
   huffEncodingNEW(runLength);
-
+  */
 
 
 }
