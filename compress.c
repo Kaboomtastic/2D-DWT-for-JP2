@@ -3,6 +3,7 @@
 #include "huffmanEncoding.c"
 #include "runLengthEncoding.c"
 #include <math.h>
+#include "differenceEncoder.c"
 
 float R[ROWS][COLS],G[ROWS][COLS],B[ROWS][COLS];
 float Y[ROWS][COLS],U[ROWS][COLS],V[ROWS][COLS];
@@ -120,7 +121,7 @@ void dwtize(){
     subPartialcoldwt(subU,i,0,ROWS/2);
     subPartialcoldwt(subV,i,0,ROWS/2);
   }
-
+  /*
   for(i = 0; i<ROWS/4; i++){
     subPartialrowdwt(subU,i+ROWS/4, COLS/4, COLS/4);
     subPartialrowdwt(subV,i+ROWS/4, COLS/4, COLS/4);
@@ -129,16 +130,17 @@ void dwtize(){
     subPartialcoldwt(subU,i+COLS/4, ROWS/4, ROWS/4);
     subPartialcoldwt(subV,i+COLS/4, ROWS/4, ROWS/4);
   }
+  */
 
 
 }
 
 
-void compress(){
+int* compress(){
   int i,j;
 
   colorSpaceChange(R,G,B,Y,U,V);
-
+  /*
   for (i=0;i<ROWS;i++) {
     printf("Y[%d]=",i);
     for (j=0; j< COLS; j++){
@@ -163,10 +165,10 @@ void compress(){
     printf("\n");
   }
   printf("\n");
-
+  */
 
   chromaSubSampler(U,V,subU,subV);
-
+  /*
   printf("subSampled:\n");
   for (i=0;i<ROWS/2;i++) {
     printf("U[%d]=",i);
@@ -184,7 +186,7 @@ void compress(){
     }
     printf("\n");
   }
-
+  */
   dwtize();
 
   printf("DWTized:\n");
@@ -235,18 +237,26 @@ void compress(){
     printf("\n");
   }
 
+  int* diff = diffEncode(QuantizedTemp, ROWS);
     // run Length Encoding
-  int* runLength = encode(ROWS, COLS, QuantizedTemp);
+  int* runLength = encode(ROWS, COLS, diff);
 
   //int length = sizeof(runLength)/sizeof(runLength[0]);
   int len = runLength[0];
   for(int i = 1; i <= len; i++){
-    printf("%d\t",runLength[i] );
+    printf("%d ",runLength[i] );
+    if(i%ROWS == 0) printf("\n");
   }printf("\n" );
   //printf("%d\n",len);
   //huffman Encoding
 
-  huffEncodingNEW(runLength);
+  int8_t *huffman = huffEncodingNEW(runLength);
+  len = (huffman[0] << 8) + ((u_int8_t)huffman[1]);
+
+  for(int i = 0; i<len; i++){
+    if(i%50 == 0) printf("\n");
+    printf("%i ", huffman[i]);
+  }
 
 /////////////////////////////////////////////
   /*
@@ -296,33 +306,10 @@ void compress(){
   huffEncodingNEW(runLength);
   */
 
-
+  return huffman;
 }
 
 
-void decompress(){
-  int i,j;
-  // run Length Decoding
-  // int* decode = decode();
-
-  dequantizer(R,ROWS/2,COLS/2,ROWS/2,COLS/2,4);
-  dequantizer(R,0,COLS/2,ROWS/2,COLS/2,2);
-  dequantizer(R,ROWS/2,0,ROWS/2,COLS/2,2);
-
-  for(i = 0; i <COLS/2; i++){
-    partialcoliwt(R,i+COLS/2, ROWS/2, ROWS/2);
-  }
-  for(i = 0; i<ROWS/2; i++){
-    partialrowiwt(R,i+ROWS/2, COLS/2, COLS/2);
-  }
-  for(i = 0; i <COLS; i++){
-    coliwt(R,i);
-  }
-  for(i = 0; i <ROWS; i++){
-    rowiwt(R,i);
-  }
-
-}
 
 
 
@@ -343,6 +330,7 @@ int main(){
 
   readFile(R,G,B);
 
+  /*
   printf("Original signal:\n");
   //for (i=0;i<32;i++) printf("x[%d]=%f\n",i,x[0][i]); //rows
   for (i=0;i<ROWS;i++) {
@@ -369,12 +357,11 @@ int main(){
     printf("\n");
   }
   printf("\n");
-
+  */
 
 
   compress();
 
-  decompress();
 
 
     return 0;

@@ -34,7 +34,7 @@ int* encode(int m, int n, int src[m][n])
 
               /* Count the number of occurrences of the new integer */
               rLen = 1;
-              while (i < numCols*numRows && src[i/numCols][i%numCols] == src[i/numCols][i%numCols+1]) {
+              while (i < numCols*numRows && src[i/numCols][i%numCols] == src[i/numCols][i%numCols+1] && rLen < 127) {
                   rLen++;
                   i++;
               }

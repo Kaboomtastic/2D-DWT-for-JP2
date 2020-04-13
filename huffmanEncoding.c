@@ -6,7 +6,7 @@
 #include <stdio.h>
 //#include "huffmanEncoding.h"
 
-int numNodes = 1024;
+int numNodes = 1200;
 
 void concatenate(char *currCode, char *prevCode, char direction){
     int i = 0;
@@ -35,7 +35,7 @@ void printBits(size_t const size, void const * const ptr)
 }
 
 
-void huffEncodingNEW(int *runLength) {
+int* huffEncodingNEW(int *runLength) {
   int length = runLength[0];
 
   struct pixFreq {
@@ -67,11 +67,11 @@ void huffEncodingNEW(int *runLength) {
   for(int i = 1; i <= length; i++){
     //printf("%d\n",runLength[i]);
     tempVal = runLength[i];
-    if(nodesArr[tempVal].value == numNodes){
-      nodesArr[tempVal].freq = 1;
-      nodesArr[tempVal].value = tempVal;
+    if(nodesArr[tempVal+numNodes/2].value == numNodes){
+      nodesArr[tempVal+numNodes/2].freq = 1;
+      nodesArr[tempVal+numNodes/2].value = tempVal;
     }else{
-      nodesArr[tempVal].freq = nodesArr[tempVal].freq + 1;
+      nodesArr[tempVal+numNodes/2].freq = nodesArr[tempVal+numNodes/2].freq + 1;
     }
 
   }
@@ -133,6 +133,11 @@ void huffEncodingNEW(int *runLength) {
               huffArr[j] = temp;
           }
       }
+  }
+
+  int order [nodes];
+  for(int i=0; i < nodes; i++){
+    order[i] = huffArr[i].value;
   }
 
   //build tree
@@ -202,8 +207,10 @@ void huffEncodingNEW(int *runLength) {
 
   //printf("Huffman Codes for Coefficients\n");
   for(int i = 0; i < nodes; i++){
-  //    printf("%d \t-> %s\n", freqArr[i].value, freqArr[i].code);
+      printf("%d \t-> %s\n", freqArr[i].value, freqArr[i].code);
   }
+
+
 
 
   u_int8_t output [length];
@@ -213,8 +220,30 @@ void huffEncodingNEW(int *runLength) {
   int bitCount = 0;
   int replace;
   int charCount;
+
   for(int i = 0; i < length; i++){
     output[i] = 0;
+  }
+  byteCount+=2;
+  output[byteCount] = nodes;
+  byteCount++;
+
+  for(int i = 0; i < nodes; i++){
+    output[byteCount] = (int8_t)(freqArr[i].value);
+    byteCount++;
+    int codelen = (u_int8_t)strlen((freqArr[i].code));
+    output[byteCount] = codelen;
+    byteCount++;
+    u_int16_t code = 0;
+    for(int j = 0; j < codelen; j++){
+      if(freqArr[i].code[codelen-1-j] == '1'){
+        code |= 1 << j;
+      }
+    }
+    output[byteCount] = code >> 8;
+    byteCount++;
+    output[byteCount] = code & 0x0FF;
+    byteCount++;
   }
   while(count <= length){
     replace = 0;
@@ -268,16 +297,16 @@ void huffEncodingNEW(int *runLength) {
     count++;
 
   }
-  for(int i = 1; i <= length; i++){
-  //  printf("%d\t",runLength[i] );
+  output[0] = byteCount >> 8;
+  output[1] = byteCount & 0x0FF;
+
+  int8_t* ret = (int8_t*)malloc(byteCount);
+  for(int i = 0; i< byteCount; i++){
+    ret[i] = output[i];
   }
-  printf("\n");
-  printf("\n");
-  printf("byteCount %d\n",byteCount);
-  for(int i = 0; i <= byteCount; i++){
-    printf("%x\t", output[i]);
-  }
-  printf("\n" );
+  printf("%d\n",byteCount );
+
+  return ret;
 }
 
 
@@ -287,6 +316,33 @@ void huffEncodingNEW(int *runLength) {
 
 
 
+int* huffmanDecode(int8_t* data){
+
+
+
+
+
+  struct huffcode {
+    int value;
+    int codelen;
+    int code;
+  };
+
+  int count = 0;
+  int len = 0;
+  int numCodes = 0;
+
+  len = data[0] << 8 + ((int8_t) data[1]);
+  count += 2;
+  numCodes = data[count];
+  count++;
+
+  for(int i = 0; i < numCodes; i++){
+
+  }
+
+
+}
 
 
 void huffEncoding(int *arr) {
