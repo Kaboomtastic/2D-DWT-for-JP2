@@ -14,16 +14,16 @@ int divisorArray[ROWS][COLS];
 int subDivisorARRAY[ROWS/2][COLS/2];
 
 
-void decompress(int* compressed){//int* data){
+void decompress(u_int8_t* compressed){//int* data){
 
-  int* decode;
+  u_int8_t* decode;
   decode = huffmanDecode(compressed);//data);
   // run Length Decoding
 
-  int* runLengthDecode = decode(decode);
-  int* diffDecode = diffDecode(runLengthDecode);
+  u_int8_t* runLengthDecode = decode(decode);
+  u_int8_t* diffDecode = diffDecode(runLengthDecode);
 
-  
+
 
   dequantizer(R,ROWS/2,COLS/2,ROWS/2,COLS/2,4);
   dequantizer(R,0,COLS/2,ROWS/2,COLS/2,2);
