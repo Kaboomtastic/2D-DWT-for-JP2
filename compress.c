@@ -306,6 +306,9 @@ int* compress(){
   huffEncodingNEW(runLength);
   */
 
+  huffmanDecode(huffman);
+
+
   return huffman;
 }
 

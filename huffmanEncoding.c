@@ -318,28 +318,92 @@ int* huffEncodingNEW(int *runLength) {
 
 int* huffmanDecode(int8_t* data){
 
-
-
-
-
   struct huffcode {
     int value;
     int codelen;
-    int code;
+    u_int16_t code;
   };
+
 
   int count = 0;
   int len = 0;
   int numCodes = 0;
 
-  len = data[0] << 8 + ((int8_t) data[1]);
+  len = (data[0] << 8) + ((u_int8_t) data[1]);
+  printf("\n%d\n",len);
   count += 2;
   numCodes = data[count];
   count++;
 
+  struct huffcode huffcodes[numCodes];
+
   for(int i = 0; i < numCodes; i++){
+    huffcodes[i].value = (int8_t) data[count];
+    count++;
+    huffcodes[i].codelen = (u_int8_t) data[count];
+    count++;
+    huffcodes[i].code = ((u_int8_t)data[count]) << 8 | (u_int8_t)data[count+1];
+    count+=2;
+    printf("%d %x\n",huffcodes[i].value,huffcodes[i].code);
+  }
+
+  u_int16_t decodelen = len - count;
+
+  u_int8_t* dest = (u_int8_t*) malloc(64*64);
+
+  int charCount = count;
+  int bitCount = 7;
+  u_int16_t tempCode = 0;
+  int destcount = 2;
+  int tempCodeLen = 0;
+  u_int8_t bit = 0;
+  int gotcode = 0;
+  while(count < len){
+
+    tempCode = 0;
+
+    while(1){
+      //printf("%x\n",data[charCount] );
+      tempCode <<= 1;
+      bit = ((data[charCount]>>bitCount) & 1);// >> bitCount;
+      //printf("%x bit\n",bit);
+      tempCode |= bit;
+      //printf("%x\n",tempCode );
+      bitCount --;
+
+      if(bitCount < 0){
+        bitCount = 7;
+        charCount++;
+        count++;
+      }
+
+      for(int i = 0; i < numCodes; i++){
+        //printf("val %x\n",huffcodes[i].code);
+        if(tempCode == huffcodes[i].code){//} && tempCodeLen == huffcodes[i].codelen){
+          dest[destcount] = huffcodes[i].value;
+          destcount++;
+          printf("val %x\n",huffcodes[i].code);
+          gotcode = 1;
+          break;
+        }
+
+      }
+      if(gotcode){
+        gotcode = 0;
+        break;
+      }
+      if(count == len){
+        break;
+      }
+
+    }
+
 
   }
+  for(int i = 0; i < destcount; i++){
+    printf("%i\t",dest[i] );
+  }
+
 
 
 }
