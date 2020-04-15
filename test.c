@@ -13,6 +13,8 @@ int subQuantizedTemp [ROWS/2][COLS/2];
 int divisorArray[ROWS][COLS];
 int subDivisorARRAY[ROWS/2][COLS/2];
 
+
+
 void quantize(){
 
   quantizer(Y,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right quadrant
@@ -65,7 +67,7 @@ int* compress(){
 
   dwtize();
 
-  printf("DWTized:\n");
+  /*printf("DWTized:\n");
 
   for (i=0;i<ROWS;i++) {
     printf("Y[%d]=",i);
@@ -73,25 +75,8 @@ int* compress(){
       printf("%f ",Y[i][j]); //cols
     }
     printf("\n");
-  }
+  }*/
 
-  printf("\n");
-  for (i=0;i<ROWS/2;i++) {
-    printf("U[%d]=",i);
-    for (j=0; j< COLS/2; j++){
-      printf("%f ",subU[i][j]); //cols
-    }
-    printf("\n");
-  }
-
-  printf("\n");
-  for (i=0;i<ROWS/2;i++) {
-    printf("V[%d]=",i);
-    for (j=0; j< COLS/2; j++){
-      printf("%f ",subV[i][j]); //cols
-    }
-    printf("\n");
-  }
 
   quantize();
 
@@ -104,27 +89,12 @@ int* compress(){
   }
 
 
-  printf("Quanitized Coefficients:\n");
-  for (i=0;i<ROWS;i++) {
-    printf("Y[%d]=",i);
-    for (j=0; j< COLS; j++){
-      printf("%d ",QuantizedTemp[i][j]); //cols
-    }
-    printf("\n");
-  }
 
   int* diff = diffEncode(QuantizedTemp, ROWS);
-    // run Length Encoding
+
   int* runLength = encode(ROWS, COLS, diff);
 
-  //int length = sizeof(runLength)/sizeof(runLength[0]);
   int len = runLength[0];
-  for(int i = 1; i <= len; i++){
-    printf("%d ",runLength[i] );
-    //if(i%ROWS == 0) printf("\n");
-  }printf("\n" );
-  //printf("%d\n",len);
-  //huffman Encoding
 
   int8_t *huffman = huffEncodingNEW(runLength);
   len = (huffman[0] << 8) + ((u_int8_t)huffman[1]);
@@ -137,18 +107,63 @@ int* compress(){
 
 
 
+void decompress(u_int8_t* compressed){//int* data){
+
+
+  int8_t* huffdecoded = huffmanDecode(compressed);
+  int8_t* deRunLengthed = decode(huffdecoded);
+  int8_t* diffDecoded = diffDecode(deRunLengthed, ROWS);
+
+
+  for(int i = 0; i < ROWS; i++){
+    for(int j = 0; j < COLS; j++){
+      R[i][j] = (float) diffDecoded[i*ROWS+j];
+    }
+  }
+
+
+  dequantizer(R,ROWS/2,COLS/2,ROWS/2,COLS/2,10); //lower Right quadrant
+  dequantizer(R,ROWS/2,0,ROWS/2,COLS/2,6); //lower left quadrant
+  dequantizer(R,0,COLS/2,ROWS/2,COLS/2,6); //upper right quadrant
+  dequantizer(R,0,0,ROWS/2,COLS/2,2);
+
+  int i;
+  /*for(i = 0; i <COLS/2; i++){
+    partialcoliwt(R,i+COLS/2, ROWS/2, ROWS/2);
+  }
+  for(i = 0; i<ROWS/2; i++){
+    partialrowiwt(R,i+ROWS/2, COLS/2, COLS/2);
+  }*/
+  for(i = 0; i <COLS; i++){
+    coliwt(R,i);
+  }
+  for(i = 0; i <ROWS; i++){
+    rowiwt(R,i);
+  }
+
+  for(int i = 0; i < ROWS; i++){
+    printf("R[%d]: ",i);
+    for(int j = 0; j < COLS; j++){
+      printf("%f ",R[i][j]);
+    }
+    printf("\n");
+  }
+
+}
+
+
+
 int main(){
-  int i,j;
-
-
-
   readFile(R,G,B);
+  for(int i = 0; i < ROWS; i++){
+    printf("R[%d]: ",i);
+    for(int j = 0; j < COLS; j++){
+      printf("%f ",R[i][j]);
+    }
+    printf("\n");
+  }
+  int* compressed = compress();
+  decompress(compressed);
 
-
-
-  compress();
-
-
-
-    return 0;
+  return 0;
 }
