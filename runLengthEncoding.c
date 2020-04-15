@@ -67,7 +67,7 @@ int* encode(int m, int n, int src[m][n])
     return dest;
 }
 
-int* decode(int* src)
+int8_t* decode(int8_t* src)
 {
     int count;
 
@@ -76,19 +76,25 @@ int* decode(int* src)
 
     /* If all integers in the source string are different,
     then size of destination [] would be twice of input [].*/
-    int* dest = (int*)malloc(sizeof(int) * ROWS*COLS);
+    int8_t* dest = (int8_t*)malloc(sizeof(int8_t) * ROWS*COLS);
 
     int i, j = 0, k;
 
+    int srcLen = ((u_int8_t)src[0] << 8) + ((u_int8_t)src[1]);
     // traverse the input []
     // i< ROWS*COLS
-    for (i = 0; src[i] != NULL; i+=2) {
+    for (i = 2; i < srcLen; i+=2) {
 
         // grab the character
-        dest[j] = src[i];
+        dest[j] = (int8_t)src[i];
         // grab the number of occurences of the character
-        count = src[i+1];
+        if(i+1>srcLen){
+          count = ROWS*COLS - 1- j;
+        }else{
+          count = src[i+1];
+        }
         for(k=0;k<count;k++){
+
             dest[j++] = src[i];
         }
 

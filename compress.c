@@ -245,7 +245,7 @@ int* compress(){
   int len = runLength[0];
   for(int i = 1; i <= len; i++){
     printf("%d ",runLength[i] );
-    if(i%ROWS == 0) printf("\n");
+    //if(i%ROWS == 0) printf("\n");
   }printf("\n" );
   //printf("%d\n",len);
   //huffman Encoding
@@ -257,6 +257,7 @@ int* compress(){
     if(i%50 == 0) printf("\n");
     printf("%i ", huffman[i]);
   }
+  printf("\n" );
 
 /////////////////////////////////////////////
   /*
@@ -305,9 +306,20 @@ int* compress(){
   }printf("\n" );
   huffEncodingNEW(runLength);
   */
+  int8_t* huffdecoded = huffmanDecode(huffman);
+  int8_t* deRunLengthed = decode(huffdecoded);
+  int8_t* diffDecoded = diffDecode(deRunLengthed, ROWS);
 
-  huffmanDecode(huffman);
-
+  printf("\n");
+  printf("\n");
+  printf("\n");
+  for(int i = 0; i < ROWS*COLS; i++){
+    if(i % 64 == 0){
+      printf("\n");
+      printf("y %d\t",i/64);
+    }
+    printf("%d ", diffDecoded[i]);
+  }
 
   return huffman;
 }

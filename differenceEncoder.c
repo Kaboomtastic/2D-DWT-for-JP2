@@ -19,6 +19,15 @@ int* diffEncode(int* data,int D){
   return dest;
 }
 
-int* diffDecode(int* data, int D){
-  
+int* diffDecode(int8_t* data, int D){
+  int8_t* dest = (int8_t*)malloc(D*D);
+  int8_t prev = 0;
+  prev = data[0];
+  dest[0] = prev;
+  for(int i = 1; i < D*D; i++){
+    dest[i] = data[i] + prev;
+    prev = dest[i];
+  }
+  return dest;
+
 }
