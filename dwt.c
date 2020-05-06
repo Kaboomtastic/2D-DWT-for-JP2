@@ -47,6 +47,16 @@ void colorSpaceChange(float R[ROWS][COLS],float G[ROWS][COLS],float B[ROWS][COLS
   }
 }
 
+void colorSpaceReverse(float Y[ROWS][COLS], float U[ROWS][COLS], float V[ROWS][COLS], float R[ROWS][COLS], float G[ROWS][COLS], float B[ROWS][COLS]){
+  for(int i = 0; i < ROWS; i++){
+    for(int j = 0; j < COLS; j++){
+      R[i][j] = 1* Y[i][j] + 1.13983*V[i][j];
+      G[i][j] = 1* Y[i][j] - .39465*U[i][j] - .58060*V[i][j];
+      B[i][j] = 1 * Y[i][j] + 2.03211 * U[i][j];
+    }
+  }
+}
+
 // 4:2:2 sampling
 void chromaSubSampler(float U[ROWS][COLS],float V[ROWS][COLS],float subU[ROWS/2][COLS/2],float subV[ROWS/2][COLS/2]){
   for(int i=0; i<ROWS; i+=2){
@@ -77,6 +87,15 @@ void subquantizer(float x[ROWS/2][COLS/2],int startRow,int startCol, int numRows
 }
 
 void dequantizer(float x[ROWS][COLS],int startRow,int startCol, int numRows, int numCols, int q){
+    int i,j;
+    for(i = 0; i < numRows; i++){
+      for(j=0; j < numCols; j++){
+        x[i+startRow][j+startCol] = x[i+startRow][j+startCol]*q;
+      }
+    }
+}
+
+void subdequantizer(float x[ROWS/2][COLS/2],int startRow,int startCol, int numRows, int numCols, int q){
     int i,j;
     for(i = 0; i < numRows; i++){
       for(j=0; j < numCols; j++){
@@ -150,6 +169,56 @@ void coldwt(float x[ROWS][COLS],int n){ //n is the current col number
   }
   for (i=0;i<ROWS;i++) x[i][n]=tempbank[i];
 }
+
+
+void subcoldwt(float x[ROWS/2][COLS/2],int n){ //n is the current col number
+  float a;
+  int i;
+
+  // Predict 1tempbank
+  a=-1.586134342;
+  for (i=1;i<ROWS/2-2;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[ROWS/2-1][n]+=2*a*x[ROWS/2-2][n];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<ROWS/2;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[0][n]+=2*a*x[1][n];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<ROWS/2-2;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[ROWS/2-1][n]+=2*a*x[ROWS/2-2][n];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<ROWS/2;i+=2) {
+    x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+  }
+  x[0][n]+=2*a*x[1][n];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<ROWS/2;i++) {
+    if (i%2) x[i][n]*=a;
+    else x[i][n]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<ROWS/2;i++) {
+    if (i%2==0) tempbank[i/2]=x[i][n];
+    else tempbank[ROWS/4+i/2]=x[i][n];
+  }
+  for (i=0;i<ROWS/2;i++) x[i][n]=tempbank[i];
+}
+
 
 
 
@@ -266,6 +335,58 @@ void rowdwt(float x[ROWS][COLS],int n) { //n is the current row number
 
 
 
+
+void subrowdwt(float x[ROWS/2][COLS/2],int n) { //n is the current row number
+  float a;
+  int i;
+
+  // Predict 1
+  a=-1.586134342;
+  for (i=1;i<COLS/2-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][COLS/2-1]+=2*a*x[n][COLS/2-2];
+
+  // Update 1
+  a=-0.05298011854;
+  for (i=2;i<COLS/2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][0]+=2*a*x[n][1];
+
+  // Predict 2
+  a=0.8829110762;
+  for (i=1;i<COLS/2-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][COLS/2-1]+=2*a*x[n][COLS/2-2];
+
+  // Update 2
+  a=0.4435068522;
+  for (i=2;i<COLS/2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][0]+=2*a*x[n][1];
+
+  // Scale
+  a=1/1.149604398;
+  for (i=0;i<COLS/2;i++) {
+    if (i%2) x[n][i]*=a;
+    else x[n][i]/=a;
+  }
+
+  // Pack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<COLS/2;i++) {
+    if (i%2==0) tempbank[i/2]=x[n][i];
+    else tempbank[COLS/4+i/2]=x[n][i];
+  }
+  for (i=0;i<COLS/2;i++) x[n][i]=tempbank[i];
+}
+
+
+
+
 void partialrowdwt(float x[ROWS][COLS],int n,int startCol, int numCols){
   float a;
   int i;
@@ -370,6 +491,54 @@ void rowiwt(float x[ROWS][COLS],int n) { //n is the current row
   x[n][COLS-1]+=2*a*x[n][COLS-2];
 }
 
+void subrowiwt(float x[ROWS/2][COLS/2],int n) { //n is the current row
+  float a;
+  int i;
+
+  // Unpack
+  //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+  for (i=0;i<COLS/4;i++) {
+    tempbank[i*2]=x[n][i];
+    tempbank[i*2+1]=x[n][i+COLS/4];
+  }
+  for (i=0;i<COLS/2;i++) x[n][i]=tempbank[i];
+
+  // Undo scale
+  a=1.149604398;
+  for (i=0;i<COLS/2;i++) {
+    if (i%2) x[n][i]*=a;
+    else x[n][i]/=a;
+  }
+
+  // Undo update 2
+  a=-0.4435068522;
+  for (i=2;i<COLS/2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][0]+=2*a*x[n][1];
+
+  // Undo predict 2
+  a=-0.8829110762;
+  for (i=1;i<COLS/2-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][COLS/2-1]+=2*a*x[n][COLS/2-2];
+
+  // Undo update 1
+  a=0.05298011854;
+  for (i=2;i<COLS/2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][0]+=2*a*x[n][1];
+
+  // Undo predict 1
+  a=1.586134342;
+  for (i=1;i<COLS/2-2;i+=2) {
+    x[n][i]+=a*(x[n][i-1]+x[n][i+1]);
+  }
+  x[n][COLS/2-1]+=2*a*x[n][COLS/2-2];
+}
+
 void partialrowiwt(float x[ROWS][COLS],int n,int startCol, int numCols){
   float a;
   int i;
@@ -465,6 +634,54 @@ void coliwt(float x[ROWS][COLS],int n){
       x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
     }
     x[ROWS-1][n]+=2*a*x[ROWS-2][n];
+}
+
+void subcoliwt(float x[ROWS/2][COLS/2],int n){
+    float a;
+    int i;
+
+    // Unpack
+    //if (tempbank==0) tempbank=(double *)malloc(n*sizeof(double));
+    for (i=0;i<ROWS/4;i++) {
+      tempbank[i*2]=x[i][n];
+      tempbank[i*2+1]=x[i+ROWS/4][n];
+    }
+    for (i=0;i<ROWS/2;i++) x[i][n]=tempbank[i];
+
+    // Undo scale
+    a=1.149604398;
+    for (i=0;i<ROWS/2;i++) {
+      if (i%2) x[i][n]*=a;
+      else x[i][n]/=a;
+    }
+
+    // Undo update 2
+    a=-0.4435068522;
+    for (i=2;i<ROWS/2;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[0][n]+=2*a*x[1][n];
+
+    // Undo predict 2
+    a=-0.8829110762;
+    for (i=1;i<ROWS/2-2;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[ROWS/2-1][n]+=2*a*x[ROWS/2-2][n];
+
+    // Undo update 1
+    a=0.05298011854;
+    for (i=2;i<ROWS/2;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[0][n]+=2*a*x[1][n];
+
+    // Undo predict 1
+    a=1.586134342;
+    for (i=1;i<ROWS/2-2;i+=2) {
+      x[i][n]+=a*(x[i-1][n]+x[i+1][n]);
+    }
+    x[ROWS/2-1][n]+=2*a*x[ROWS/2-2][n];
 }
 
 

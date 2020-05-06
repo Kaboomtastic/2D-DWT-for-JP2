@@ -35,7 +35,7 @@ void printBits(size_t const size, void const * const ptr)
 }
 
 
-int* huffEncodingNEW(int *runLength) {
+int8_t* huffEncodingNEW(int *runLength) {
   int length = runLength[0];
 
   struct pixFreq {
@@ -319,8 +319,8 @@ int* huffEncodingNEW(int *runLength) {
 int8_t* huffmanDecode(int8_t* data){
 
   struct huffcode {
-    int value;
-    int codelen;
+    int8_t value;
+    u_int8_t codelen;
     u_int16_t code;
   };
 
@@ -346,6 +346,10 @@ int8_t* huffmanDecode(int8_t* data){
     count+=2;
   }
 
+  for(int i = 0; i < numCodes; i++){
+    printf("%d %d %d\n",huffcodes[i].value,huffcodes[i].codelen,huffcodes[i].code);
+  }
+
   u_int16_t decodelen = len - count;
 
   int8_t* dest = (int8_t*) malloc(64*64*2);
@@ -360,7 +364,7 @@ int8_t* huffmanDecode(int8_t* data){
   while(count < len){
 
     tempCode = 0;
-
+    tempCodeLen = 0;
     while(1){
       if(count > len){
         break;
@@ -371,6 +375,7 @@ int8_t* huffmanDecode(int8_t* data){
       //printf("%x bit\n",bit);
       tempCode |= bit;
       //printf("%x\n",tempCode );
+      tempCodeLen++;
       bitCount --;
 
       if(bitCount < 0){
@@ -381,7 +386,7 @@ int8_t* huffmanDecode(int8_t* data){
 
       for(int i = 0; i < numCodes; i++){
         //printf("val %x\n",huffcodes[i].code);
-        if(tempCode == huffcodes[i].code){//} && tempCodeLen == huffcodes[i].codelen){
+        if(tempCode == huffcodes[i].code && tempCodeLen == huffcodes[i].codelen){//} && tempCodeLen == huffcodes[i].codelen){
           dest[destcount] = huffcodes[i].value;
           destcount++;
           //printf("%i \t",huffcodes[i].value);
@@ -402,8 +407,8 @@ int8_t* huffmanDecode(int8_t* data){
 
 
   }
-  dest[0] = destcount>>8;
-  dest[1] = destcount&0x0FF;
+  dest[0] = (u_int8_t)destcount>>8;
+  dest[1] = (u_int8_t)destcount&0x0FF;
 
   return dest;
 
